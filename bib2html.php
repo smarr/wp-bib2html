@@ -51,7 +51,7 @@ function sortByYear($a, $b)
   return ($f1 < $f2) ? -1 : 1;
 }
 
-function bib2htmlProcess($data, $filterType, $filter) {
+function bib2htmlProcess($data, $filterType, $filter, $sort) {
     $OSBiBPath = dirname(__FILE__) . '/OSBiB/';
     include_once($OSBiBPath.'format/bibtexParse/PARSEENTRIES.php');
     include_once($OSBiBPath.'format/BIBFORMAT.php');
@@ -72,9 +72,19 @@ function bib2htmlProcess($data, $filterType, $filter) {
     list($info, $citation, $styleCommon, $styleTypes) = $bibformat->loadStyle($OSBiBPath."styles/bibliography/", "IEEE");
     $bibformat->getStyle($styleCommon, $styleTypes);
 
-    // currently sorting descending on year by default
-    usort($entries, "sortByYear");
-    $reverse=true;
+	// figure out sorting
+	switch ($sort) {
+		case 'reversed':
+			$reverse = true;
+			break;
+		case 'byYearReversed':
+			$reverse = true;
+			// break left out intensionally
+		case 'byYear':
+			usort($entries, "sortByYear");
+			break;
+	}
+	
     if ($reverse) {
        $entries = array_reverse($entries);
     }
@@ -129,7 +139,7 @@ function toDownload($entry) {
 function bib2html($myContent) {
 
    // search for all [bibtex filename] tags and extract the filename
-   preg_match_all("/\[\s*bibtex\s+file=(.+)(\s+(allow|deny|key)=(.+))*]/U", $myContent, $bibItemsSets, PREG_SET_ORDER);
+   preg_match_all("/\[\s*bibtex\s+file=(.+)(\s+(allow|deny|key)=(.+))*(\s+sort=(reversed|byYear|byYearReversed))?]/U", $myContent, $bibItemsSets, PREG_SET_ORDER);
 
    if ($bibItemsSets) {
 		
@@ -143,7 +153,7 @@ function bib2html($myContent) {
 				$bib = file_get_contents($bibFile);
 				if (!empty($bib)) {
 				        // if bibtex file identified and opened, then convert to html
-					$htmlbib = bib2htmlProcess($bib, $bibItems[3], $bibItems[4]);
+					$htmlbib = bib2htmlProcess($bib, $bibItems[3], $bibItems[4], $bibItems[6]);
 					$myContent = str_replace($bibItems[0], $htmlbib, $myContent);			
 				} else { 
 					$myContent = str_replace( $bibItems[0], $bibItems[1] . ' bibtex file empty', $myContent);	
