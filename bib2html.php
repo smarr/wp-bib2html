@@ -51,7 +51,7 @@ function sortByYear($a, $b)
   return ($f1 < $f2) ? -1 : 1;
 }
 
-function bib2htmlProcess($data, $filterType, $filter, $sort) {
+function bib2htmlProcess($data, $filterType, $filter, $sort, $max) {
     $OSBiBPath = dirname(__FILE__) . '/OSBiB/';
     include_once($OSBiBPath.'format/bibtexParse/PARSEENTRIES.php');
     include_once($OSBiBPath.'format/BIBFORMAT.php');
@@ -94,6 +94,7 @@ function bib2htmlProcess($data, $filterType, $filter, $sort) {
     $tpl = new TemplatePower(dirname(__FILE__) . '/bibentry-html.tpl');
     $tpl->prepare();
     foreach ($entries as $entry) {
+		if (isset($entry['url'])) { $entry['url'] = htmlentities($entry['url']); }
 		// Get the resource type ('book', 'article', 'inbook' etc.)
 		$resourceType = $entry['bibtexEntryType'];
 		
@@ -121,6 +122,7 @@ function bib2htmlProcess($data, $filterType, $filter, $sort) {
                 $tpl->assign("key", strtr($bibkey, ":", "-"));
                 $tpl->assign("entry", str_replace(array('{', '}'), '', $bibformat->map()));
                 $tpl->assign("bibtex", formatBibtex($entry['bibtexEntry']));
+		if ($max > 0 && $max < $i) { break; } 
     }        
      
     return $tpl->getOutputContent();          
@@ -139,7 +141,7 @@ function toDownload($entry) {
 function bib2html($myContent) {
 
    // search for all [bibtex filename] tags and extract the filename
-   preg_match_all("/\[\s*bibtex\s+file=(.+)(\s+(allow|deny|key)=(.+))*(\s+sort=(reversed|byYear|byYearReversed))?]/U", $myContent, $bibItemsSets, PREG_SET_ORDER);
+   preg_match_all("/\[\s*bibtex\s+file=(.+)(\s+(allow|deny|key)=(.+))*(\s+sort=(reversed|byYear|byYearReversed))?(\s+max=([0-9]+))?]/U", $myContent, $bibItemsSets, PREG_SET_ORDER);
 
    if ($bibItemsSets) {
 		
@@ -153,7 +155,7 @@ function bib2html($myContent) {
 				$bib = file_get_contents($bibFile);
 				if (!empty($bib)) {
 				        // if bibtex file identified and opened, then convert to html
-					$htmlbib = bib2htmlProcess($bib, $bibItems[3], $bibItems[4], $bibItems[6]);
+					$htmlbib = bib2htmlProcess($bib, $bibItems[3], $bibItems[4], $bibItems[6], $bibItems[8]);
 					$myContent = str_replace($bibItems[0], $htmlbib, $myContent);			
 				} else { 
 					$myContent = str_replace( $bibItems[0], $bibItems[1] . ' bibtex file empty', $myContent);	
