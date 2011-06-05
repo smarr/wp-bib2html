@@ -290,6 +290,9 @@ class BIBFORMAT
 	$fallback = $this->fallback[$type];
 	$type = $fallback;
       }
+    if (empty($this->$type)) {
+      $type = "misc";
+    }
     $this->type = $type;
     /**
      * Add BibTeX entry to $this->item
