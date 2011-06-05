@@ -287,12 +287,13 @@ class BIBFORMAT
      */
     if(!isset($this->$type))
       {
-	$fallback = $this->fallback[$type];
-	$type = $fallback;
+        if (empty($this->fallback[$type])) {
+          $type = "miscellaneous";
+        }
+        
+        $fallback = $this->fallback[$type];
+        $type = $fallback;
       }
-    if (empty($this->$type)) {
-      $type = "misc";
-    }
     $this->type = $type;
     /**
      * Add BibTeX entry to $this->item
@@ -403,7 +404,8 @@ class BIBFORMAT
 	  }
       }
     $this->type = $type;
-    if(array_key_exists('creator1', $row) && $row['creator1'] && 
+    if(isset($this->styleMap->$type) &&
+       array_key_exists('creator1', $row) && $row['creator1'] && 
        array_key_exists('creator1', $this->styleMap->$type))
       {
 	$creators = $parseCreator->parse($row['creator1']);
@@ -434,7 +436,9 @@ class BIBFORMAT
 	  }
 	$this->formatNames($temp, 'creator2');
       }
-    if(array_key_exists('pages', $row) && array_key_exists('pages', $this->styleMap->$type))
+    if(isset($this->styleMap->$type) &&
+       array_key_exists('pages', $row) &&
+       array_key_exists('pages', $this->styleMap->$type))
       {
 	list($start, $end) = $parsePages->init($row['pages']);
 	$this->formatPages(trim($start), trim($end));
@@ -863,7 +867,7 @@ class BIBFORMAT
       $firstName = stripslashes($creator['firstname']);
     else if($creator['firstname']) // Initial only of first name.  'firstname' field may actually have several 'firstnames'
       {
-	$fn = split(" ", stripslashes($creator['firstname']));
+	$fn = explode(" ", stripslashes($creator['firstname']));
 	$firstTime = TRUE;
 	foreach($fn as $name)
 	  {
@@ -978,8 +982,15 @@ class BIBFORMAT
     $delimitRight = preg_quote($delimitRight);
     $match = "/" . $delimitLeft . "/";
     $type = $this->type;
-    if(!array_key_exists('title', $this->styleMap->$type))
+    
+    if(isset($this->styleMap->$type) &&
+       array_key_exists('title', $this->styleMap->$type)) {
       $this->item[$this->styleMap->{$type}['title']] = '';
+    }
+    else {
+      $this->item[$this->styleMap->miscellaneous['title']] = '';
+    }
+      
     /**
      * '0' == 'Osbib Bibliographic Formatting'
      * '1' == 'Osbib bibliographic formatting'
@@ -1008,7 +1019,11 @@ class BIBFORMAT
       }
     $pString = isset($newString) ? $newString : $pString;
     $title = $this->utf8->encodeUtf8($this->utf8->utf8_ucfirst(trim($pString)));
-    $this->item[$this->styleMap->{$type}['title']] =
+    
+    $title_idx = (isset($this->styleMap->$type))
+                    ? $this->styleMap->{$type}['title']
+                    : $this->styleMap->miscellaneous['title'];
+    $this->item[$title_idx] =
       ($this->output == 'html') ? $this->utf8->utf8_htmlspecialchars($title) : $title;
   }
   /**
