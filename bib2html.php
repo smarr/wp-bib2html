@@ -190,15 +190,24 @@ function formatBibtex($entry){
     return $new_entry;
 }
 
+function filenameForCache($name) {
+	return md5($name).'.bib';
+}
+
 /* Returns filename of cached version of given url  */
 function getCached($url) {
     // check if cached file exists
     $name = substr($url, strrpos($url, "/")+1);
-    $file = dirname(__FILE__) . "/data/" . $name . ".cached.bib";
+    $file = dirname(__FILE__) . "/data/" . filenameForCache($name) ;
     
     // check if file date exceeds 60 minutes   
     if (! (file_exists($file) && (filemtime($file) + 3600 > time())))  {
-        // not returned yet, grab new version
+	// make sure folder exists
+	if (!file_exists(dirname(__FILE__) . "/data/")) {
+		mkdir(dirname(__FILE__) . "/data/");
+	}        
+
+	// not returned yet, grab new version
         $f=fopen($file,"wb");
         if ($f) {
                   fwrite($f,file_get_contents($url));
@@ -206,7 +215,7 @@ function getCached($url) {
         } else echo "Failed to write file" . $file . " - check directory permission according to your Web server privileges.";
     }
    
-    return $name.".cached.bib";
+    return filenameForCache($name);
 }
 
 
