@@ -58,7 +58,7 @@ function bib2htmlProcess($data, $filterType, $filter, $sort, $max) {
     include_once(dirname(__FILE__) . '/class.TemplatePower.inc.php');
 
     // parse the content of bib string and generate associative array with valid entries
-    $parse = NEW PARSEENTRIES();
+    $parse = new PARSEENTRIES();
     $parse->expandMacro = TRUE;
     $parse->fieldExtract = TRUE;
     $parse->removeDelimit = TRUE;
@@ -67,10 +67,12 @@ function bib2htmlProcess($data, $filterType, $filter, $sort, $max) {
     list($preamble, $strings, $entries) = $parse->returnArrays();
 	
     /* Format the entries array  for html output */
-    $bibformat = NEW BIBFORMAT($OSBiBPath, TRUE); // TRUE implies that the input data is in bibtex format
+    $bibformat = new BIBFORMAT($OSBiBPath, TRUE); // TRUE implies that the input data is in bibtex format
     $bibformat->cleanEntry=TRUE; // convert BibTeX (and LaTeX) special characters to UTF-8
     list($info, $citation, $styleCommon, $styleTypes) = $bibformat->loadStyle($OSBiBPath."styles/bibliography/", "IEEE");
     $bibformat->getStyle($styleCommon, $styleTypes);
+
+    $reverse = false;
 
 	// figure out sorting
 	switch ($sort) {
@@ -155,7 +157,11 @@ function bib2html($myContent) {
 				$bib = file_get_contents($bibFile);
 				if (!empty($bib)) {
 				        // if bibtex file identified and opened, then convert to html
-					$htmlbib = bib2htmlProcess($bib, $bibItems[3], $bibItems[4], $bibItems[6], $bibItems[8]);
+					$htmlbib = bib2htmlProcess($bib,
+					                           isset($bibItems[3])?$bibItems[3]:NULL,
+					                           isset($bibItems[4])?$bibItems[4]:NULL,
+					                           isset($bibItems[6])?$bibItems[6]:NULL,
+					                           isset($bibItems[8])?$bibItems[8]:NULL);
 					$myContent = str_replace($bibItems[0], $htmlbib, $myContent);			
 				} else { 
 					$myContent = str_replace( $bibItems[0], $bibItems[1] . ' bibtex file empty', $myContent);	

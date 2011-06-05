@@ -177,7 +177,7 @@ class BIBFORMAT
 		  {
 		    if($array['_NAME'] == 'independent')
 		      {
-			$split = split("_", $elements['_NAME']);
+			$split = explode("_", $elements['_NAME']);
 			$this->{$type}[$array['_NAME']][$split[1]] 
 					= $elements['_DATA'];
 		      }
@@ -238,7 +238,7 @@ class BIBFORMAT
      * Set any author/editor re-ordering for book and book_article type.
      */
     if(!$this->preview && (($type == 'book') || ($type == 'book_article')) && 
-       $row['creator2'] && !$row['creator1'] && $this->style['editorSwitch'] &&
+       !empty($row['creator2']) && !$row['creator1'] && $this->style['editorSwitch'] &&
        array_key_exists('author', $this->$type))
       {
 	$row['creator1'] = $row['creator2'];
