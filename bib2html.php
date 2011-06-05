@@ -4,7 +4,7 @@
 Plugin Name: bib2html
 Plugin URI: http://sergioandreozzi.com/wordpress/bib2html
 Description: bib2html enables to add bibtex entries formatted as HTML in wordpress pages and posts. The input data is the bibtex text file and the output is HTML. 
-Version: 0.9.3
+Version: 0.9.3.1-sm-0.3
 Author: Sergio Andreozzi
 Author URI: http://sergioandreozzi.com
 */
