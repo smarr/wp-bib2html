@@ -97,6 +97,8 @@ function bib2htmlProcess($data, $filterType, $filter, $sort, $max) {
     $tpl->prepare();
     foreach ($entries as $entry) {
 		if (isset($entry['url'])) { $entry['url'] = htmlentities($entry['url']); }
+                if (isset($entry['pdf'])) { $entry['pdf'] = htmlentities($entry['pdf']); }
+
 		// Get the resource type ('book', 'article', 'inbook' etc.)
 		$resourceType = $entry['bibtexEntryType'];
 		
@@ -112,7 +114,6 @@ function bib2htmlProcess($data, $filterType, $filter, $sort, $max) {
 		     ( (strcmp($filterType, "key")   === 0) && (strcmp($filter, $bibkey) != 0) ) ) continue;
  
 		$i++;
-                $biblogo = '<a href="#' . $bibkey . '" onclick="Effect.toggle(\''. $bibkey . "','appear'); return false\">bibtex</a>";
 		 
 		// get the formatted resource string ready for printing to the web browser
 		// the str_replace is used to remove the { } parentheses possibly present in title 
@@ -120,7 +121,10 @@ function bib2htmlProcess($data, $filterType, $filter, $sort, $max) {
                 $tpl->newBlock("bibtex_entry");
                 $tpl->assign("year", $entry['year']);
                 $tpl->assign("type", $entry['bibtexEntryType']);
-                $tpl->assign("pdf", toDownload($entry));
+                $tpl->assign("url", link_from_entry($entry));
+                $tpl->assign("pdf", pdf_from_entry($entry));
+                $tpl->assign("doi", doi_from_entry($entry));
+                $tpl->assign("self", get_permalink());
                 $tpl->assign("key", strtr($bibkey, ":", "-"));
                 $tpl->assign("entry", str_replace(array('{', '}'), '', $bibformat->map()));
                 $tpl->assign("bibtex", formatBibtex($entry['bibtexEntry']));
@@ -129,15 +133,27 @@ function bib2htmlProcess($data, $filterType, $filter, $sort, $max) {
      
     return $tpl->getOutputContent();          
 }
- 
- 
-function toDownload($entry) {
-    if(array_key_exists('url',$entry)){
-      $string = " <a href='" . $entry['url'] . "' title='Go to document'><img src='" . get_bloginfo('wpurl') . "/wp-content/plugins/bib2html/external.png' width='10' height='10' alt='Go to document' /></a>";
-      return $string;
-    }
-    return '';  
+
+function doi_from_entry($entry) {
+  if (array_key_exists('doi', $entry)) {
+    return "<a href='http://dx.doi.org/{$entry['doi']}'>(doi)</a>";
   }
+  return '';
+}
+
+function link_from_entry($entry) {
+  if (array_key_exists('url', $entry)) {
+    return "<a href='{$entry['url']}'><img src='" . get_bloginfo('wpurl') . "/wp-content/plugins/bib2html/external.png' width='10' height='10' alt='Go to document' /></a>";
+  }
+  return '';
+}
+ 
+function pdf_from_entry($entry) {
+  if (array_key_exists('pdf', $entry)){
+    return " <a href='" . $entry['pdf'] . "' title='Download PDF: {$entry['title']}'>(pdf)</a>";
+  }
+  return '';  
+}
 
   
 function bib2html($myContent) {
@@ -219,27 +235,12 @@ function getCached($url) {
 }
 
 
-function bib2html_head()
-{
-  if (!function_exists('wp_enqueue_script')) {
- 	echo "\n" . '<script src="'.  get_bloginfo('wpurl') . '/wp-content/plugins/bib2html/js/jquery.js"  type="text/javascript"></script>' . "\n";
-  	echo '<script src="'.  get_bloginfo('wpurl') . '/wp-content/plugins/bib2html/js/bib2html.js"  type="text/javascript"></script>' . "\n";
-//  echo '<script src="'.  get_bloginfo('wpurl') . '/wp-content/plugins/bib2html/js/jqModal.js"  type="text/javascript"></script>' . "\n";
- // echo '<link type="text/css" rel="stylesheet" media="all" href="' . get_bloginfo('wpurl') . '/wp-content/plugins/bib2html/css/jqModal.css" />' . "\n";
-}
-echo "<style type=\"text/css\">
-
-div.bibtex {
-    display: none;
-}</style>";
-
+function bib2html_head() {
+  echo "<style type=\"text/css\">div.bibtex { display: none; }</style>";
 }
 
 function bib2html_init() {
 	if (function_exists('wp_enqueue_script')) {
-              // wp_deregister_script('jquery');
-              // wp_register_script('jquery', get_bloginfo('wpurl') . '/wp-content/plugins/bib2html/js/jquery.js', false, '1.2.1');
-              // wp_enqueue_script('jquery');
                wp_register_script('bib2html', get_bloginfo('wpurl') . '/wp-content/plugins/bib2html/js/bib2html.js', array('jquery'), '0.7');
                wp_enqueue_script('bib2html');
 	} 
