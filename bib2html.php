@@ -91,8 +91,51 @@ function bib2htmlProcess($data, $filterType, $filter, $sort, $max) {
        $entries = array_reverse($entries);
     }
 	
-    $i=0;
-    //   $citations = '<dl>';
+    // make sure only the max num items are in entries
+    if ($max > 0) {
+      $entries = array_slice($entries, 0, $max);
+    }
+
+    if (startsWith($sort, 'byYear')) {
+       $entries = separateByYear($entries);
+       if ($reverse) {
+         krsort($entries);
+       } else {
+         ksort($entries);
+       }
+    
+       $output = '';
+       foreach ($entries as $year => $entryYear) {
+         $output .= "<h4>$year</h4>";
+         $output .= generate_html_for_entries($entryYear, $filterType, $filter, $bibformat);
+       }
+       return $output;
+    }
+    else return generate_html_for_entries($entries, $filterType, $filter, $bibformat);
+}
+
+// ini_set("display_errors", 1);
+// error_reporting(E_ALL | E_STRICT);
+
+function separateByYear($entries) {
+  $result = array();
+  foreach ($entries as $entry) {
+    $year = $entry['year'];
+    if (!isset($result[$year]))
+     $result[$year] = array();
+
+    $result[$year][] = $entry;
+  }
+  
+  return $result;
+}
+
+function startsWith($haystack, $needle)
+{
+    return !strncmp($haystack, $needle, strlen($needle));
+}
+
+function generate_html_for_entries($entries, $filterType, $filter, $bibformat) {
     $tpl = new TemplatePower(dirname(__FILE__) . '/bibentry-html.tpl');
     $tpl->prepare();
     foreach ($entries as $entry) {
@@ -113,22 +156,19 @@ function bib2htmlProcess($data, $filterType, $filter, $sort, $max) {
 		     ( (strcmp($filterType, "deny")  === 0) && ($pos !== false) ) or
 		     ( (strcmp($filterType, "key")   === 0) && (strcmp($filter, $bibkey) != 0) ) ) continue;
  
-		$i++;
-		 
 		// get the formatted resource string ready for printing to the web browser
 		// the str_replace is used to remove the { } parentheses possibly present in title 
 		// to enforce uppercase, TODO: check if it can be done only on title 
                 $tpl->newBlock("bibtex_entry");
-                $tpl->assign("year", $entry['year']);
-                $tpl->assign("type", $entry['bibtexEntryType']);
-                $tpl->assign("url", link_from_entry($entry));
-                $tpl->assign("pdf", pdf_from_entry($entry));
-                $tpl->assign("doi", doi_from_entry($entry));
-                $tpl->assign("self", get_permalink());
-                $tpl->assign("key", strtr($bibkey, ":", "-"));
-                $tpl->assign("entry", str_replace(array('{', '}'), '', $bibformat->map()));
+                $tpl->assign("year",   $entry['year']);
+                $tpl->assign("type",   $entry['bibtexEntryType']);
+                $tpl->assign("url",    link_from_entry($entry));
+                $tpl->assign("pdf",    pdf_from_entry($entry));
+                $tpl->assign("doi",    doi_from_entry($entry));
+                $tpl->assign("self",   get_permalink());
+                $tpl->assign("key",    strtr($bibkey, ":", "-"));
+                $tpl->assign("entry",  str_replace(array('{', '}'), '', $bibformat->map()));
                 $tpl->assign("bibtex", formatBibtex($entry['bibtexEntry']));
-		if ($max > 0 && $max < $i) { break; } 
     }        
      
     return $tpl->getOutputContent();          
