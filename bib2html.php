@@ -176,21 +176,21 @@ function generate_html_for_entries($entries, $filterType, $filter, $bibformat) {
 
 function doi_from_entry($entry) {
   if (array_key_exists('doi', $entry)) {
-    return "<a href='http://dx.doi.org/{$entry['doi']}'>(doi)</a>";
+    return "<a href='http://dx.doi.org/{$entry['doi']}'>doi</a>";
   }
   return '';
 }
 
 function link_from_entry($entry) {
   if (array_key_exists('url', $entry)) {
-    return "<a href='{$entry['url']}'><img src='" . get_bloginfo('wpurl') . "/wp-content/plugins/bib2html/external.png' width='10' height='10' alt='Go to document' /></a>";
+    return "<a href='{$entry['url']}'>html</a>";
   }
   return '';
 }
  
 function pdf_from_entry($entry) {
   if (array_key_exists('pdf', $entry)){
-    return " <a href='" . $entry['pdf'] . "' title='Download PDF: {$entry['title']}'>(pdf)</a>";
+    return " <a href='" . $entry['pdf'] . "' title='Download PDF: {$entry['title']}'>pdf</a>";
   }
   return '';  
 }
